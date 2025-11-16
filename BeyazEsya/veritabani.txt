@@ -1,0 +1,316 @@
+-- Database oluştur (varsa atla)
+IF DB_ID('WhiteGoodsStore') IS NULL
+BEGIN
+    CREATE DATABASE WhiteGoodsStore;
+END
+GO
+
+USE WhiteGoodsStore;
+GO
+
+/***********************************
+ * SCHEMA: Temel tablolar
+ ***********************************/
+
+-- Markalar
+CREATE TABLE Brands (
+    BrandId INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(1000) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+-- Kategoriler (ör: Buzdolabı, Çamaşır Makinesi)
+CREATE TABLE Categories (
+    CategoryId INT IDENTITY(1,1) PRIMARY KEY,
+    Name NVARCHAR(100) NOT NULL,
+    ParentCategoryId INT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT FK_Categories_Parent FOREIGN KEY (ParentCategoryId) REFERENCES Categories(CategoryId)
+);
+
+-- Ürünler
+CREATE TABLE Products (
+    ProductId INT IDENTITY(1,1) PRIMARY KEY,
+    SKU NVARCHAR(50) NOT NULL UNIQUE, -- stok kodu
+    Name NVARCHAR(250) NOT NULL,
+    BrandId INT NULL,
+    CategoryId INT NULL,
+    Description NVARCHAR(MAX) NULL,
+    Price DECIMAL(18,2) NOT NULL CHECK (Price >= 0),
+    IsActive BIT NOT NULL DEFAULT 1,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    UpdatedAt DATETIME2 NULL,
+    CONSTRAINT FK_Products_Brand FOREIGN KEY (BrandId) REFERENCES Brands(BrandId),
+    CONSTRAINT FK_Products_Category FOREIGN KEY (CategoryId) REFERENCES Categories(CategoryId)
+);
+
+-- Ürün görselleri
+CREATE TABLE ProductImages (
+    ImageId INT IDENTITY(1,1) PRIMARY KEY,
+    ProductId INT NOT NULL,
+    Url NVARCHAR(1000) NOT NULL,
+    IsMain BIT NOT NULL DEFAULT 0,
+    SortOrder INT NOT NULL DEFAULT 0,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT FK_ProductImages_Product FOREIGN KEY (ProductId) REFERENCES Products(ProductId)
+);
+
+-- Stok / Envanter (basit)
+CREATE TABLE Inventory (
+    InventoryId INT IDENTITY(1,1) PRIMARY KEY,
+    ProductId INT NOT NULL,
+    Quantity INT NOT NULL DEFAULT 0 CHECK (Quantity >= 0),
+    Warehouse NVARCHAR(100) NULL,
+    LastUpdated DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT FK_Inventory_Product FOREIGN KEY (ProductId) REFERENCES Products(ProductId)
+);
+
+-- Müşteriler (kullanıcılar)
+CREATE TABLE Customers (
+    CustomerId INT IDENTITY(1,1) PRIMARY KEY,
+    Email NVARCHAR(255) NOT NULL UNIQUE,
+    PasswordHash NVARCHAR(255) NOT NULL, -- gerçek sste hash + salt olmalı
+    FirstName NVARCHAR(100) NULL,
+    LastName NVARCHAR(100) NULL,
+    Phone NVARCHAR(50) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    IsActive BIT NOT NULL DEFAULT 1
+);
+
+-- Adresler
+CREATE TABLE Addresses (
+    AddressId INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerId INT NOT NULL,
+    Title NVARCHAR(100) NULL, -- Örn: "Ev", "İş"
+    FullName NVARCHAR(200) NULL,
+    AddressLine NVARCHAR(500) NOT NULL,
+    City NVARCHAR(150) NOT NULL,
+    Region NVARCHAR(150) NULL,
+    PostalCode NVARCHAR(20) NULL,
+    Country NVARCHAR(100) NOT NULL DEFAULT 'Türkiye',
+    Phone NVARCHAR(50) NULL,
+    IsDefault BIT NOT NULL DEFAULT 0,
+    CONSTRAINT FK_Addresses_Customer FOREIGN KEY (CustomerId) REFERENCES Customers(CustomerId)
+);
+
+-- Siparişler
+CREATE TABLE Orders (
+    OrderId INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerId INT NOT NULL,
+    OrderNumber NVARCHAR(50) NOT NULL UNIQUE, -- örn: 'ORD202511160001'
+    OrderDate DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    Status NVARCHAR(50) NOT NULL DEFAULT 'Pending', -- Pending, Paid, Shipped, Completed, Cancelled
+    ShippingAddressId INT NULL,
+    BillingAddressId INT NULL,
+    Subtotal DECIMAL(18,2) NOT NULL CHECK (Subtotal >= 0),
+    Shipping DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (Shipping >= 0),
+    Tax DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (Tax >= 0),
+    Total DECIMAL(18,2) NOT NULL CHECK (Total >= 0),
+    PaymentMethod NVARCHAR(100) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT FK_Orders_Customer FOREIGN KEY (CustomerId) REFERENCES Customers(CustomerId),
+    CONSTRAINT FK_Orders_ShippingAddress FOREIGN KEY (ShippingAddressId) REFERENCES Addresses(AddressId),
+    CONSTRAINT FK_Orders_BillingAddress FOREIGN KEY (BillingAddressId) REFERENCES Addresses(AddressId)
+);
+
+-- Sipariş kalemleri
+CREATE TABLE OrderItems (
+    OrderItemId INT IDENTITY(1,1) PRIMARY KEY,
+    OrderId INT NOT NULL,
+    ProductId INT NOT NULL,
+    SKU NVARCHAR(50) NULL,
+    ProductName NVARCHAR(250) NOT NULL,
+    UnitPrice DECIMAL(18,2) NOT NULL CHECK (UnitPrice >= 0),
+    Quantity INT NOT NULL CHECK (Quantity > 0),
+    LineTotal AS (UnitPrice * Quantity) PERSISTED,
+    CONSTRAINT FK_OrderItems_Order FOREIGN KEY (OrderId) REFERENCES Orders(OrderId) ON DELETE CASCADE,
+    CONSTRAINT FK_OrderItems_Product FOREIGN KEY (ProductId) REFERENCES Products(ProductId)
+);
+
+-- Ödemeler
+CREATE TABLE Payments (
+    PaymentId INT IDENTITY(1,1) PRIMARY KEY,
+    OrderId INT NOT NULL,
+    PaymentDate DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    Amount DECIMAL(18,2) NOT NULL CHECK (Amount >= 0),
+    PaymentStatus NVARCHAR(50) NOT NULL, -- Paid, Failed, Pending, Refunded
+    TransactionId NVARCHAR(200) NULL,
+    Provider NVARCHAR(100) NULL,
+    CONSTRAINT FK_Payments_Order FOREIGN KEY (OrderId) REFERENCES Orders(OrderId)
+);
+
+-- Kargo / Sevkiyat
+CREATE TABLE Shipments (
+    ShipmentId INT IDENTITY(1,1) PRIMARY KEY,
+    OrderId INT NOT NULL,
+    Carrier NVARCHAR(100) NULL,
+    TrackingNumber NVARCHAR(200) NULL,
+    ShippedDate DATETIME2 NULL,
+    EstimatedDeliveryDate DATETIME2 NULL,
+    Status NVARCHAR(50) NULL,
+    CONSTRAINT FK_Shipments_Order FOREIGN KEY (OrderId) REFERENCES Orders(OrderId)
+);
+
+-- Ürün yorumları / puanlama
+CREATE TABLE ProductReviews (
+    ReviewId INT IDENTITY(1,1) PRIMARY KEY,
+    ProductId INT NOT NULL,
+    CustomerId INT NOT NULL,
+    Rating TINYINT NOT NULL CHECK (Rating >=1 AND Rating <=5),
+    Title NVARCHAR(250) NULL,
+    Body NVARCHAR(MAX) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    IsApproved BIT NOT NULL DEFAULT 0,
+    CONSTRAINT FK_ProductReviews_Product FOREIGN KEY (ProductId) REFERENCES Products(ProductId),
+    CONSTRAINT FK_ProductReviews_Customer FOREIGN KEY (CustomerId) REFERENCES Customers(CustomerId)
+);
+
+-- Kuponlar / indirimler (basit)
+CREATE TABLE Coupons (
+    CouponId INT IDENTITY(1,1) PRIMARY KEY,
+    Code NVARCHAR(50) NOT NULL UNIQUE,
+    Description NVARCHAR(500) NULL,
+    DiscountPercent DECIMAL(5,2) NULL CHECK (DiscountPercent >=0 AND DiscountPercent <=100),
+    DiscountAmount DECIMAL(18,2) NULL CHECK (DiscountAmount >=0),
+    StartDate DATETIME2 NULL,
+    EndDate DATETIME2 NULL,
+    IsActive BIT NOT NULL DEFAULT 1
+);
+
+-- Favoriler / wishlist
+CREATE TABLE Wishlists (
+    WishlistId INT IDENTITY(1,1) PRIMARY KEY,
+    CustomerId INT NOT NULL,
+    ProductId INT NOT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT FK_Wishlists_Customer FOREIGN KEY (CustomerId) REFERENCES Customers(CustomerId),
+    CONSTRAINT FK_Wishlists_Product FOREIGN KEY (ProductId) REFERENCES Products(ProductId)
+);
+
+/***********************************
+ * İndeks ve performans önerileri
+ ***********************************/
+
+-- Örnek: ürün aramalarında yardımcı olacak indeks
+CREATE NONCLUSTERED INDEX IX_Products_Name_Category ON Products(Name, CategoryId);
+
+-- Sipariş sorguları için
+CREATE NONCLUSTERED INDEX IX_Orders_Customer_OrderDate ON Orders(CustomerId, OrderDate);
+
+-- Inventory için product lookup
+CREATE NONCLUSTERED INDEX IX_Inventory_Product ON Inventory(ProductId);
+
+/***********************************
+ * Örnek seed veri
+ ***********************************/
+
+-- Markalar
+INSERT INTO Brands (Name, Description) VALUES
+('Bosch', 'Alman beyaz eşya markası.'),
+('Arçelik', 'Türkiye merkezli beyaz eşya.'),
+('Samsung', 'Güney Kore büyük elektronik ve beyaz eşya.');
+
+-- Kategoriler
+INSERT INTO Categories (Name, ParentCategoryId) VALUES
+('Buzdolabı', NULL),
+('Çamaşır Makinesi', NULL),
+('Bulaşık Makinesi', NULL),
+('Fırın & Ocak', NULL);
+
+-- Ürünler
+INSERT INTO Products (SKU, Name, BrandId, CategoryId, Description, Price, IsActive)
+VALUES
+('BOS-RF-300', 'Bosch 300L No-Frost Buzdolabı', 1, 1, 'Enerji verimli, No-Frost', 11999.00, 1),
+('ARC-CW-700', 'Arçelik 7kg Çamaşır Makinesi', 2, 2, 'Ekonomik ve sessiz yıkama', 6499.00, 1),
+('SAM-DW-500', 'Samsung 12 Program Bulaşık Makinesi', 3, 3, 'Düşük su tüketimli', 7599.00, 1);
+
+-- Görseller
+INSERT INTO ProductImages (ProductId, Url, IsMain, SortOrder)
+VALUES
+(1, '/images/products/bosch_rf_300_main.jpg', 1, 0),
+(2, '/images/products/arcelik_cw_700_main.jpg', 1, 0),
+(3, '/images/products/samsung_dw_500_main.jpg', 1, 0);
+
+-- Inventory
+INSERT INTO Inventory (ProductId, Quantity, Warehouse)
+VALUES (1, 10, 'İstanbul Depo'), (2, 25, 'Ankara Depo'), (3, 15, 'İzmir Depo');
+
+-- Customers (NOT: password hash örnektir)
+INSERT INTO Customers (Email, PasswordHash, FirstName, LastName, Phone)
+VALUES
+('ali@example.com', 'hashedpassword1', 'Ali', 'Veli', '05551234567'),
+('ayse@example.com', 'hashedpassword2', 'Ayşe', 'Yılmaz', '05559876543');
+
+-- Adres
+INSERT INTO Addresses (CustomerId, Title, FullName, AddressLine, City, Region, PostalCode, Country, Phone, IsDefault)
+VALUES
+(1, 'Ev', 'Ali Veli', 'Atatürk Cd. No:5', 'İstanbul', 'Kadıköy', '34710', 'Türkiye', '05551234567', 1),
+(2, 'İş', 'Ayşe Yılmaz', 'İş Merkezi 2', 'Ankara', 'Çankaya', '06690', 'Türkiye', '05559876543', 1);
+
+/***********************************
+ * Basit view ve stored procedure örnekleri
+ ***********************************/
+
+-- Sipariş detaylarını görebileceğimiz view
+CREATE VIEW vw_OrderDetails AS
+SELECT
+    o.OrderId,
+    o.OrderNumber,
+    o.OrderDate,
+    o.CustomerId,
+    c.FirstName, c.LastName, c.Email,
+    o.Status,
+    o.Subtotal, o.Shipping, o.Tax, o.Total
+FROM Orders o
+LEFT JOIN Customers c ON o.CustomerId = c.CustomerId;
+
+-- Sipariş oluşturma için basit stored procedure (transaction içerir)
+-- NOT: Gerçek ortamda daha fazla validasyon, stok rezerve/rollback mantığı gerekir.
+CREATE PROCEDURE sp_CreateOrder
+    @CustomerId INT,
+    @ShippingAddressId INT = NULL,
+    @BillingAddressId INT = NULL,
+    @PaymentMethod NVARCHAR(100) = NULL,
+    @CouponCode NVARCHAR(50) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    BEGIN TRY
+        BEGIN TRAN;
+
+        -- Basit: benzersiz sipariş numarası
+        DECLARE @OrderNumber NVARCHAR(50) = 'ORD' + CONVERT(NVARCHAR(20), GETDATE(), 112) + RIGHT('00000' + CONVERT(NVARCHAR(10), NEXT VALUE FOR sys.sequences),5);
+        -- Yukarıdaki NEXT VALUE FOR sys.sequences örnek; eğer sequence tanımlı değilse alternatif kullan:
+        -- SET @OrderNumber = 'ORD' + FORMAT(GETDATE(),'yyyyMMddHHmmss') + CAST(ABS(CHECKSUM(NEWID())) % 10000 AS VARCHAR(4));
+
+        -- For demo: hesaplama dışarıda yapılmalı. Burada 0 ile insert.
+        INSERT INTO Orders (CustomerId, OrderNumber, Status, ShippingAddressId, BillingAddressId, Subtotal, Shipping, Tax, Total, PaymentMethod)
+        VALUES (@CustomerId, @OrderNumber, 'Pending', @ShippingAddressId, @BillingAddressId, 0, 0, 0, 0, @PaymentMethod);
+
+        DECLARE @OrderId INT = SCOPE_IDENTITY();
+
+        -- TODO: OrderItems eklemesi uygulama tarafından yapılır veya burada parametreyle verilir.
+
+        COMMIT;
+        SELECT @OrderId AS OrderId, @OrderNumber AS OrderNumber;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0 ROLLBACK;
+        DECLARE @ErrMsg NVARCHAR(4000) = ERROR_MESSAGE();
+        RAISERROR(@ErrMsg, 16, 1);
+    END CATCH
+END;
+GO
+
+/***********************************
+ * Öneriler / Notlar
+ ***********************************/
+
+-- DİPNOT:
+-- 1) Şifreler: PasswordHash alanı sadece örnek. Production'da PBKDF2/Argon2/BCrypt gibi güvenli hashing + salt kullanın.
+-- 2) Stok kontrolü: Sipariş anında Inventory.Quantity kontrolü, rezerve (hold) ve stok hareket kaydı tablosu (StockMovements) ekleyin.
+-- 3) Ödeme sağlayıcıları: ödemeler için bir PaymentProviders tablosu ve webhook/transaction log tutun.
+-- 4) Performans: Sık kullanılan sorgular için ek indeksler ekleyin; büyük veri için partitioning düşünün.
+-- 5) Uluslararasılaşma: Çoklu para birimi ve çoklu dil gerekiyorsa ayrı tablolar veya çeviri tablosu ekleyin.
+-- 6) Transaction / Retry / Idempotency: Sipariş/ödeme akışlarında idempotency token'ları kullanın.

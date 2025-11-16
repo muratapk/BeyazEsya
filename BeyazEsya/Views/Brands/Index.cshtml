@@ -1,0 +1,32 @@
+﻿@model List<BeyazEsya.Models.Brands>
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_adminLayout.cshtml";
+}
+
+<h1>Index</h1>
+<a href="/Brands/Create" class="btn btn-primary">Yeni Kayıt</a>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <td>Adı</td>
+            <td>Açıklama</td>
+            <td>Düzelt</td>
+            <td>Silme</td>
+        </tr>
+
+    </thead>
+
+    <tbody>
+        @foreach(var row in Model)
+        {
+            <tr>
+                <td>@row.Name</td>
+                <td>@row.Description</td>
+                <td><a href="/Brands/Edit/@row.BrandId" class="btn btn-secondary">Düzelt</a></td>
+                <td><a href="/Brands/Delete/@row.BrandId" class="btn btn-danger">Silme</a></td>
+            </tr>
+        }
+       
+    </tbody>
+</table>
