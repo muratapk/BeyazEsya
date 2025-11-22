@@ -12,6 +12,7 @@ namespace BeyazEsya.Models
         [Required(ErrorMessage = "Açıklama Boş Geçilemez")]
         public  string ?  Description { get; set; }
         public DateTime ? CreateAt { get; set; }
+        public ICollection<Products>? Products { get; set; }
 
 
     }

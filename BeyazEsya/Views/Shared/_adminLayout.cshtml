@@ -34,7 +34,8 @@
                     </a>
                     <a href="/Brands/Index" class="list-group-item list-group-item-action">Markalar</a>
                     <a href="/Customers/Index" class="list-group-item list-group-item-action">Müşteriler</a>
-                    <a href="#" class="list-group-item list-group-item-action">A fourth link item</a>
+                    <a href="/Categories/Index" class="list-group-item list-group-item-action">Kategoriler</a>
+                    <a href="/Products/Index" class="list-group-item list-group-item-action">Ürünler</a>
                     <a href="#" class="list-group-item list-group-item-action disabled" aria-disabled="true">A disabled link item</a>
                 </div>
             </div>
@@ -46,5 +47,6 @@
 
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
