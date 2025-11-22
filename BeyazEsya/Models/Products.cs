@@ -18,5 +18,6 @@ namespace BeyazEsya.Models
         public decimal ? Price { get; set; }
         public Boolean IsActive { get; set; }
         public DateTime ? Created { get; set; }
+        public ICollection<ProductImages> ? ProductImages { get; set; }
     }
 }

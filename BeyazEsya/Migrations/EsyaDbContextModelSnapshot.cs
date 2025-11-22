@@ -110,6 +110,41 @@ namespace BeyazEsya.Migrations
                     b.ToTable("customers");
                 });
 
+            modelBuilder.Entity("BeyazEsya.Models.ProductImages", b =>
+                {
+                    b.Property<int>("ImagesId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ImagesId"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ImageTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsMain")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("OrderNo")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ImagesId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("productImages");
+                });
+
             modelBuilder.Entity("BeyazEsya.Models.Products", b =>
                 {
                     b.Property<int>("ProductId")
@@ -150,6 +185,15 @@ namespace BeyazEsya.Migrations
                     b.ToTable("products");
                 });
 
+            modelBuilder.Entity("BeyazEsya.Models.ProductImages", b =>
+                {
+                    b.HasOne("BeyazEsya.Models.Products", "Products")
+                        .WithMany("ProductImages")
+                        .HasForeignKey("ProductId");
+
+                    b.Navigation("Products");
+                });
+
             modelBuilder.Entity("BeyazEsya.Models.Products", b =>
                 {
                     b.HasOne("BeyazEsya.Models.Brands", "Brand")
@@ -173,6 +217,11 @@ namespace BeyazEsya.Migrations
             modelBuilder.Entity("BeyazEsya.Models.Categories", b =>
                 {
                     b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("BeyazEsya.Models.Products", b =>
+                {
+                    b.Navigation("ProductImages");
                 });
 #pragma warning restore 612, 618
         }

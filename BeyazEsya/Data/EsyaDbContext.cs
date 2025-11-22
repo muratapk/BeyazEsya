@@ -14,6 +14,7 @@ namespace BeyazEsya.Data
         public DbSet<Customers> ? customers { get; set; }
         public DbSet<Categories>? categories { get; set; }
         public DbSet<Products>? products { get; set; }
+        public DbSet<ProductImages>? productImages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -26,6 +27,11 @@ namespace BeyazEsya.Data
                 HasOne(p => p.Category).
                 WithMany(c => c.Products).
                 HasForeignKey(p => p.CategoryId);
+
+            modelBuilder.Entity<ProductImages>().
+                HasOne(pi => pi.Products).
+                WithMany(p => p.ProductImages).
+                HasForeignKey(pi => pi.ProductId);
 
         }
     }
