@@ -2,6 +2,7 @@ using System.Diagnostics;
 using BeyazEsya.Data;
 using BeyazEsya.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BeyazEsya.Controllers
 {
@@ -17,7 +18,7 @@ namespace BeyazEsya.Controllers
         [HttpGet]
         public IActionResult UrunDetay(int id)
         {
-            var result=_context.products.Where(x=>x.ProductId==id).FirstOrDefault();
+            var result=_context.products.Include(x=>x.ProductImages).Where(x=>x.ProductId==id).FirstOrDefault();
             return View(result);
         }
         public IActionResult Index()
