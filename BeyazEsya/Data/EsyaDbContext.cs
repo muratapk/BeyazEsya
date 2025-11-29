@@ -1,14 +1,15 @@
 ﻿using BeyazEsya.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace BeyazEsya.Data
 {
-    public class EsyaDbContext:DbContext
+    public class EsyaDbContext:IdentityDbContext<AppUser,AppRole,int>
     {
         //Constructor
         public EsyaDbContext(DbContextOptions<EsyaDbContext>options):base(options)
         {
-
+            
         }
         public DbSet<Brands>? brands { get; set; }
         public DbSet<Customers> ? customers { get; set; }
@@ -18,7 +19,9 @@ namespace BeyazEsya.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-             modelBuilder.Entity<Products>().
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Products>().
                 HasOne(p => p.Brand).
                 WithMany(b => b.Products).
                 HasForeignKey(p => p.BrandId);

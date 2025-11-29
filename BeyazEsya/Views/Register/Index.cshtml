@@ -1,0 +1,71 @@
+﻿@model BeyazEsya.Dto.RegisterDto
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_HomeLayout.cshtml";
+}
+
+
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+
+            <div class="card shadow-sm">
+                <div class="card-header text-center">
+                    <h4 class="mb-0">Register</h4>
+                </div>
+
+                <div class="card-body">
+                    <form asp-action="Index" asp-controller="Register" method="post">
+
+                        <!-- Firstname -->
+                        <div class="mb-3">
+                            <label class="form-label">First Name</label>
+                            <input type="text" class="form-control" asp-for="FirstName" name="FirstName" placeholder="Enter first name">
+                        </div>
+
+                        <!-- Lastname -->
+                        <div class="mb-3">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" class="form-control" asp-for="LastName" name="LastName" placeholder="Enter last name">
+                        </div>
+
+                        <!-- City -->
+                        <div class="mb-3">
+                            <label class="form-label">City</label>
+                            <input type="text" class="form-control" asp-for="City" name="City" placeholder="Enter your city">
+                        </div>
+
+                        <!-- Username -->
+                        <div class="mb-3">
+                            <label class="form-label">User Name</label>
+                            <input type="text" class="form-control" asp-for="UserName" name="UserName" placeholder="Choose a username">
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" asp-for="Email" name="Email" placeholder="Enter email">
+                        </div>
+
+                        <!-- Password -->
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" asp-for="Password" name="Password" placeholder="Enter password">
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="mb-3">
+                            <label class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" asp-for="ConfirmPassword" name="ConfirmPassword" placeholder="Confirm your password">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Register</button>
+
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
