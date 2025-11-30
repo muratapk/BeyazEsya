@@ -16,6 +16,7 @@ namespace BeyazEsya.Data
         public DbSet<Categories>? categories { get; set; }
         public DbSet<Products>? products { get; set; }
         public DbSet<ProductImages>? productImages { get; set; }
+        public DbSet<CartItem> cartItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
