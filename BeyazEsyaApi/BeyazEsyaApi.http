@@ -1,0 +1,6 @@
+@BeyazEsyaApi_HostAddress = http://localhost:5234
+
+GET {{BeyazEsyaApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

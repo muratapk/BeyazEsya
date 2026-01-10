@@ -1,0 +1,22 @@
+﻿@model BeyazEsya.Models.Brands
+@{
+    ViewData["Title"] = "Create";
+    Layout = "~/Views/Shared/_adminLayout.cshtml";
+}
+
+<h1>Create</h1>
+
+<h1>Create</h1>
+<form action="Create" method="post">
+    <div class="mb-3">
+        <label>Marka Adı</label>
+        <input type="text" asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name"></span>
+    </div>
+    <div class="mb-3">
+        <label>Açıklama</label>
+        <input type="text" asp-for="Description" class="form-control" />
+        <span asp-validation-for="Description"></span>
+    </div>
+    <input type="submit" value="Kayıt" class="btn btn-danger" />
+</form>

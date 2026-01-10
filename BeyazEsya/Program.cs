@@ -18,6 +18,7 @@ builder.Services.AddSession(options =>
 });
 builder.Services.AddSingleton<IHttpContextAccessor,HttpContextAccessor>();
 
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<CartHelper>();
 
 builder.Services.ConfigureApplicationCookie(options =>
