@@ -1,4 +1,4 @@
-﻿@model BeyazEsya.Dto.RegisterDto
+﻿@model BeyazEsya.Dto.UserProfilView
 @{
     ViewData["Title"] = "Index";
     Layout = "~/Views/Shared/_adminLayout.cshtml";
@@ -14,7 +14,7 @@
                 </div>
 
                 <div class="card-body">
-                    <form asp-action="Index" asp-controller="Register" method="post">
+                    <form asp-action="Edit" asp-controller="Account" method="post">
 
                         <!-- Firstname -->
                         <div class="mb-3">

@@ -60,7 +60,10 @@ namespace BeyazEsya.Controllers
                 brands = JsonConvert.DeserializeObject<Brands>(data);
                 View(brands);
             }
-            return View();
+            
+                return View();
+           
+                
         }
         [HttpPost("id")]
         public IActionResult Edit(Brands brand,int id)

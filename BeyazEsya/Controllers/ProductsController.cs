@@ -50,7 +50,7 @@ namespace BeyazEsya.Controllers
         public IActionResult Create()
         {
             ViewData["BrandId"] = new SelectList(_context.brands, "BrandId", "Description");
-            ViewData["CategoryId"] = new SelectList(_context.categories, "CategoryId", "CategoryId");
+            ViewData["CategoryId"] = new SelectList(_context.categories, "CategoryId", "Name");
             return View();
         }
 
@@ -68,7 +68,7 @@ namespace BeyazEsya.Controllers
                 return RedirectToAction(nameof(Index));
             }
             ViewData["BrandId"] = new SelectList(_context.brands, "BrandId", "Description", products.BrandId);
-            ViewData["CategoryId"] = new SelectList(_context.categories, "CategoryId", "CategoryId", products.CategoryId);
+            ViewData["CategoryId"] = new SelectList(_context.categories, "CategoryId", "Name", products.CategoryId);
             return View(products);
         }
 
